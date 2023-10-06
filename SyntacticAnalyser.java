@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
+import Token.TokenType;
+
 
 public class SyntacticAnalyser {
 
@@ -169,7 +171,7 @@ public class SyntacticAnalyser {
 		return symbolList;
 	}
 
-	public static ParseTree parse(List<Token> tokens) throws SyntaxException {
+	public static HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> getParseTable() {
 		HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> parseTable = new HashMap<>();
 		List<Symbol> RHS = new ArrayList<>();
 		
@@ -208,16 +210,67 @@ public class SyntacticAnalyser {
 		// 3.6
 		RHS = stringToSymbols("<<print>> ;");
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.stat, Token.TokenType.PRINT), RHS);
-		//3.7
+		// 3.7
 		RHS = stringToSymbols(";");
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.stat, Token.TokenType.SEMICOLON), RHS);
+		// 4
+		RHS = stringToSymbols("while ( <<rel expr>> <<bool expr>> ) { <<los>> } ");
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.whilestat, Token.TokenType.WHILE), RHS);
+		// 5
+		RHS = stringToSymbols("for ( <<for start>> ; <<rel expr>> <<bool expr>> ; <<for arith>> ) { <<los>> } ");
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forstat, Token.TokenType.FOR), RHS);
+		// 6.1
+		RHS = stringToSymbols("<<decl>>");
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forstart, Token.TokenType.TYPE), RHS);
+		// 6.2
+		RHS = stringToSymbols("<<assign>>");
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forstart, Token.TokenType.ID), RHS);
+		// 6.3
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forstart, Token.TokenType.SEMICOLON), epsilon);
+		// 7.1
+		RHS = stringToSymbols("<<arith expr>>");
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.LPAREN), RHS);
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.ID), RHS);
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.NUM), RHS);
+		// 7.2
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.NUM), epsilon);
 
 
-		Pair testPair = new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.stat, Token.TokenType.TYPE);
-		System.out.println(parseTable.get(testPair));
+
+
+
+		return parseTable;
+	}
+
+	public static void addToStack(Deque<Symbol> stack, List<Symbol> symbols) {
+
+	} 
+
+	public static ParseTree parse(List<Token> tokens) throws SyntaxException {
+		HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> parseTable = getParseTable();
 		
 		
-		
+		Deque<Symbol> stack = new ArrayDeque<Symbol>();
+		stack.addLast(TreeNode.Label.terminal);
+		stack.addLast(TreeNode.Label.prog);
+
+		int inputIdx = 0;
+		tokens.get(inputIdx);
+
+		while (!stack.isEmpty()) {
+			Symbol topOfStack = stack.pop();
+			if (!topOfStack.isVariable()) {
+
+			}
+			else {
+			}
+			
+			Pair<TreeNode.Label, Token.TokenType> testPair = new Pair<>((TreeNode.Label) topOfStack, tokens.get(inputIdx).getType());
+			System.out.println(parseTable.get(testPair));
+
+
+		}
+
 		return new ParseTree();
 	}
 
