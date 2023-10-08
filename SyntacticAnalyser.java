@@ -233,7 +233,7 @@ public class SyntacticAnalyser {
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.ID), RHS);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.NUM), RHS);
 		// 7.2
-		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.NUM), epsilon);
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.forarith, Token.TokenType.RPAREN), epsilon);
 		// 8
 		RHS = stringToSymbols("if ( <<relexpr>> <<boolexpr>> ) { <<los>> } <<elseif>> ");
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.ifstat, Token.TokenType.IF), RHS);
@@ -270,7 +270,7 @@ public class SyntacticAnalyser {
         //14.2
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.possassign, Token.TokenType.SEMICOLON), epsilon);
         // 15
-		RHS = stringToSymbols("System.out.println ( <<print expr>> )");
+		RHS = stringToSymbols("System.out.println ( <<printexpr>> )");
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.print, Token.TokenType.PRINT), RHS);
 		//16
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.type, Token.TokenType.TYPE), type);
@@ -335,7 +335,8 @@ public class SyntacticAnalyser {
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.GT), RHS);
 		//24.2
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.EQUAL), epsilon);
-		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.RBRACE), epsilon);
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.NEQUAL), epsilon);
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.RPAREN), epsilon);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.AND), epsilon);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.OR), epsilon);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.relexprprime, Token.TokenType.SEMICOLON), epsilon);
@@ -384,6 +385,8 @@ public class SyntacticAnalyser {
 		RHS = stringToSymbols("% <<factor>> <<term'>>");
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.termprime, Token.TokenType.MOD), RHS);
         //29.4
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.termprime, Token.TokenType.PLUS), epsilon);
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.termprime, Token.TokenType.MINUS), epsilon);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.termprime, Token.TokenType.EQUAL), epsilon);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.termprime, Token.TokenType.NEQUAL), epsilon);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.termprime, Token.TokenType.RPAREN), epsilon);
@@ -407,27 +410,30 @@ public class SyntacticAnalyser {
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.printexpr, Token.TokenType.TRUE), RHS);
 		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.printexpr, Token.TokenType.FALSE), RHS);
 		//31.2
-		RHS = stringToSymbols("\"<<stringlit>> \"");
-		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.factor, Token.TokenType.DQUOTE), RHS);
+		RHS = stringToSymbols("\" <<stringlit>> \"");
+		parseTable.put(new Pair<TreeNode.Label, Token.TokenType>(TreeNode.Label.printexpr, Token.TokenType.DQUOTE), RHS);
 
-		for (Map.Entry<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> entry : parseTable.entrySet()) {
-			System.out.println(entry.getKey() + " = " + entry.getValue());
-		}
+		// for (Map.Entry<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> entry : parseTable.entrySet()) {
+		// 	System.out.println(entry.getKey() + " = " + entry.getValue());
+		// }
+
 		return parseTable;
 	}
 
 	static int inputIdx = 0;
-	public static void treeRecursion(List<Token> tokens, TreeNode parent, HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> parseTable, ParseTree parseTree) throws SyntaxException {
+	public static void treeRecursion(List<Token> tokens, TreeNode parent, HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> parseTable) throws SyntaxException {
 
-		System.out.println("\n-----------------------\n New Step \n");
-		System.out.println("Current node: " + parent);
 		Pair<TreeNode.Label, Token.TokenType> pair = new Pair<>((TreeNode.Label) parent.getLabel(), tokens.get(inputIdx).getType());
 		List<Symbol> symbols = parseTable.get(pair);
-
+		// System.out.println("\n-----------------------\n New Step \n");
+		// System.out.println("Current node: " + parent);
+		// System.out.println("Symbols: " + symbols);
+		if (symbols.size() == 0)
+			return;
 		for (Symbol symbol : symbols) {
+			Token currentInput = tokens.get(inputIdx);
 			System.out.println("Symbols: " + symbols);
 			System.out.println(inputIdx);
-			Token currentInput = tokens.get(inputIdx);
 			System.out.println("Current tree: " + parseTree);
 			System.out.println("Current symbol: " + symbol);
 			System.out.println("Current input: " + currentInput);
@@ -436,7 +442,7 @@ public class SyntacticAnalyser {
 				TreeNode newParent = new TreeNode((TreeNode.Label) symbol, parent);
 				parent.addChild(newParent);
 				if (!((TreeNode.Label) symbol == TreeNode.Label.epsilon)) {
-					treeRecursion(tokens, newParent, parseTable, parseTree);
+					treeRecursion(tokens, newParent, parseTable);
 					System.out.println("Finished one step");
 				}
 			}
@@ -444,9 +450,9 @@ public class SyntacticAnalyser {
 				if ((Token.TokenType) symbol == currentInput.getType()) {
 						TreeNode leaf = new TreeNode(TreeNode.Label.terminal, currentInput, parent);
 						parent.addChild(leaf);
-						System.out.println("+1");
 						inputIdx++;
-						System.out.println(inputIdx);
+						// System.out.println("+1");
+						// System.out.println(inputIdx);
 					}
 				else
 					throw new SyntaxException("Incorrect Syntax");
@@ -456,49 +462,18 @@ public class SyntacticAnalyser {
 
 	} 
 
+	static ParseTree parseTree = null;
 	public static ParseTree parse(List<Token> tokens) throws SyntaxException {
-		HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> parseTable = getParseTable();
-
-
-		TreeNode currentParent = new TreeNode(TreeNode.Label.prog, null);
-		ParseTree parseTree = new ParseTree(currentParent);
-
-		treeRecursion(tokens, currentParent, parseTable, parseTree);
-
-
-		// while (!stack.isEmpty()) {
-		// 	Symbol topOfStack = stack.pollLast();
-		// 	Token currentInput = tokens.get(inputIdx);
-		// 	System.out.println("Top of stack: " + topOfStack);
-		// 	System.out.println("Current input: " + currentInput);
-
-			// if (topOfStack.isVariable()) {
-			// 	if (!(topOfStack == TreeNode.Label.prog)) {
-			// 		TreeNode newParent = new TreeNode((TreeNode.Label) topOfStack, currentParent);
-			// 		currentParent.addChild(newParent);
-			// 		currentParent = newParent;
-			// 	}
-
-			// 	Pair<TreeNode.Label, Token.TokenType> pair = new Pair<>((TreeNode.Label) topOfStack, tokens.get(inputIdx).getType());
-			// 	List<Symbol> rules = parseTable.get(pair);
-			// 	System.out.println("Rules: " + rules);
-			// 	Collections.reverse(rules);
-			// 	stack.addAll(rules);
-			// }
-			// else {
-			// 	if ((Token.TokenType) topOfStack == currentInput.getType()) {
-			// 		TreeNode leaf = new TreeNode(TreeNode.Label.terminal, currentInput, currentParent);
-			// 		inputIdx++;
-			// 	}
-			// 	else
-			// 		throw new SyntaxException("Incorrect Syntax");
-			// }
-			
-
-			// System.out.println("Current stack: " + stack);
+		// try {
+			inputIdx = 0;
+			HashMap<Pair<TreeNode.Label, Token.TokenType>, List<Symbol>> parseTable = getParseTable();
+			TreeNode currentParent = new TreeNode(TreeNode.Label.prog, null);
+			parseTree = new ParseTree(currentParent);
+			treeRecursion(tokens, currentParent, parseTable);
+			return parseTree;
+		// } catch (Exception e) {
+		// 	throw new SyntaxException("Incorrect Syntax");
 		// }
-
-		return parseTree;
 	}
 
 }
